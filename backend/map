@@ -1,0 +1,29 @@
+Models
+User
+Fields: googleId, name, email, profilePhotoUrl, timestamps
+Message
+Fields: senderId, text, timestamp, conversationId
+Conversation
+Fields: participants, participantNames, messages, createdAt
+Routes
+Auth Routes
+Google OAuth: /auth/google, /auth/google/callback
+Logout: /auth/logout
+Check Session: /auth/check
+User Routes
+Get Users: GET /users
+Message Routes
+Post Message: POST /messages
+Get Messages by Conversation: GET /messages/:conversationId
+Conversation Routes
+Get Conversations: GET /conversations, GET /conversations/earlier
+Post New Conversation: POST /conversations
+Middleware
+isAuthenticated: Ensures user is logged in
+Database Connection
+MongoDB URI: process.env.MONGO_URI (MongoDB connection setup in mongoose.setup.js)
+Authentication
+Google OAuth2: Setup in passport-setup.js using GoogleStrategy
+Server Setup
+Server runs on port specified in .env or 5000 if unspecified.
+CORS configured for http://localhost:3000 with sessions managed by MongoDB.

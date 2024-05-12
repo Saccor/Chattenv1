@@ -1,0 +1,52 @@
+/* Style for each Conversation Item */
+.conversation-item {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  /* Highlight for active conversation */
+  .conversation-active {
+    background-color: #e0e0e0;
+    font-weight: bold;
+  }
+  
+  /* Search box area */
+  .search-box {
+    width: 30%; /* Same width as the conversation list */
+    padding: 10px;
+    box-sizing: border-box; /* Include padding in width calculation */
+  }
+  
+  /* Input for searching conversations */
+  .search-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  /* Dropdown to select user */
+  .user-select {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  /* Message Area */
+  .message-area {
+    margin-bottom: 20px;
+    height: 60%;
+    overflow-y: auto;
+  }
+  
+  /* Input for new messages */
+  .message-input {
+    width: 85%;
+    margin-right: 5%;
+    padding: 10px;
+  }
+  
+  /* Button to send new messages */
+  .send-button {
+    width: 10%;
+  }

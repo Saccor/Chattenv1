@@ -20,7 +20,7 @@ const server = http.createServer(app);
 initializeSocket(server);
 
 // Dynamically set the CORS origin based on environment
-const allowedOrigins = ['http://localhost:3000', 'https://your-deployed-frontend-url.com'];
+const allowedOrigins = ['http://localhost:3000', 'https://chattenv1.vercel.app'];
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {

@@ -1,7 +1,7 @@
 // src/services/api.js
 import axios from 'axios';
 
-// Determine the base URL based on the environment
+
 const API_BASE_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:5000'
   : 'https://saccoschatt.onrender.com';

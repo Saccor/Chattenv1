@@ -20,10 +20,10 @@ const server = http.createServer(app); // Use only HTTP server
 initializeSocket(server);
 
 // Dynamically set the CORS origin based on environment
-const allowedOrigins = ['https://chattenv1.vercel.app', 'http://localhost:3000'];
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    const allowedOrigins = ['https://chattenv1.vercel.app', 'http://localhost:3000'];
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -33,6 +33,7 @@ app.use(cors({
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
 
 app.use(express.json());
 connectDB();

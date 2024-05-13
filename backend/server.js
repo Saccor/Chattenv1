@@ -14,7 +14,7 @@ import initializeSocket from './sockets/socket.js';
 
 dotenv.config();
 const app = express();
-const server = http.createServer(app);
+const server = http.createServer(app); // Use only HTTP server
 
 // Socket.IO setup
 initializeSocket(server);
@@ -45,7 +45,7 @@ app.use(session({
   }),
   cookie: {
     maxAge: 1800000, // 30 minutes
-    secure: process.env.NODE_ENV === 'production', // Set to true in production
+    secure: false, // Set to false because we're not using HTTPS
     httpOnly: true,
   },
 }));

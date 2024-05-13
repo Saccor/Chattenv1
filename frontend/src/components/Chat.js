@@ -11,7 +11,7 @@ import {
 import './Chat.css';
 
 // Dynamically determine the server URL based on the environment
-const serverUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://your-deployed-backend-url.com';
+const serverUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://saccoschatt.onrender.com';
 
 const socket = io(serverUrl, { withCredentials: true });
 

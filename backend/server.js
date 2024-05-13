@@ -14,7 +14,7 @@ import initializeSocket from './sockets/socket.js';
 
 dotenv.config();
 const app = express();
-const server = http.createServer(app); // Use only HTTP server
+const server = http.createServer(app);
 
 // Socket.IO setup
 initializeSocket(server);
@@ -38,8 +38,8 @@ app.use(express.json());
 connectDB();
 app.use(session({
   secret: process.env.SESSION_SECRET || 'default_secret',
-  resave: true,
-  saveUninitialized: false,
+  resave: false,  // This should be false to avoid unnecessary session resaves
+  saveUninitialized: false,  // This should be false to avoid creating uninitialized sessions
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI
   }),
@@ -47,6 +47,7 @@ app.use(session({
     maxAge: 1800000, // 30 minutes
     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
     httpOnly: true,
+    sameSite: 'lax', // Helps protect against CSRF attacks
   },
 }));
 app.use(passport.initialize());

@@ -31,7 +31,6 @@ router.post('/', isAuthenticated, async (req, res) => {
       conversationId  // Make sure this is included and correct
     });
     
-
     // Save the message to the database
     await newMessage.save();
 
@@ -45,7 +44,6 @@ router.post('/', isAuthenticated, async (req, res) => {
     res.status(500).send(error.message);
   }
 });
-
 
 // GET messages for a specific conversation
 router.get('/:conversationId', isAuthenticated, async (req, res) => {

@@ -1,4 +1,3 @@
-// routes/userRoutes.js
 import express from 'express';
 import User from '../models/User.js';
 import isAuthenticated from '../middleware/isAuthenticated.js';

@@ -6,7 +6,7 @@ import {
   sendMessage,
   fetchUsers,
   fetchCurrentUser,
-  fetchMessages
+  fetchMessages,
 } from '../services/api';
 import './Chat.css';
 

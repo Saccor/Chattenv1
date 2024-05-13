@@ -19,9 +19,16 @@ const server = http.createServer(app);
 // Socket.IO setup
 initializeSocket(server);
 
-// Middlewares for CORS and session
+// Dynamically set the CORS origin based on environment
+const allowedOrigins = ['http://localhost:3000', 'https://your-deployed-frontend-url.com'];
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -37,8 +44,8 @@ app.use(session({
     mongoUrl: process.env.MONGO_URI
   }),
   cookie: {
-    maxAge: 1800000,
-    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1800000, // 30 minutes
+    secure: process.env.NODE_ENV === 'production', // Set to true in production
     httpOnly: true,
   },
 }));

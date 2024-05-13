@@ -10,8 +10,11 @@ import {
 } from '../services/api';
 import './Chat.css';
 
-// Assuming your server is running on localhost:5000
-const socket = io('http://localhost:5000');
+// Dynamically determine the server URL based on the environment
+const serverUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://your-deployed-backend-url.com';
+
+const socket = io(serverUrl, { withCredentials: true });
+
 
 function Chat() {
   const [conversations, setConversations] = useState([]);

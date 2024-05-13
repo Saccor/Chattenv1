@@ -1,17 +1,21 @@
 // src/services/api.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000'; // Adjust if your backend base URL is different
+// Determine the base URL based on the environment
+const API_BASE_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:5000'
+  : 'https://saccoschatt.onrender.com';
+
 
 const client = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true
 });
 
-// Interceptor to add the auth token to requests
+
 client.interceptors.request.use(
   config => {
-    const token = localStorage.getItem('authToken'); // Adjust 'authToken' to where your token is stored
+    const token = localStorage.getItem('authToken'); 
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
@@ -35,7 +39,7 @@ export const sendMessage = (conversationId, text) => {
 };
 
 export const createConversation = (participantIds) => {
-  console.log("Creating conversation with IDs:", participantIds); // Debug output
+  console.log("Creating conversation with IDs:", participantIds); 
   return client.post('/conversations', { participants: participantIds });
 };
 
@@ -52,7 +56,7 @@ export const fetchCurrentUser = () => {
     .then(response => {
       const { user, isAuthenticated } = response.data;
       if (isAuthenticated) {
-        // Store the authentication token
+       
         const token = response.headers['authorization'];
         localStorage.setItem('authToken', token);
       }

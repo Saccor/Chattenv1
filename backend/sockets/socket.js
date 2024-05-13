@@ -1,10 +1,18 @@
 import { Server as SocketIO } from 'socket.io';
-import User from '../models/User.js';  // Adjust the path as necessary
+import User from '../models/User.js';
 
 const initializeSocket = (server) => {
   const io = new SocketIO(server, {
     cors: {
-      origin: 'http://localhost:3000',
+      origin: function (origin, callback) {
+        // List of valid origins
+        const allowedOrigins = ['http://localhost:3000', 'https://chattenv1.vercel.app'];
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true
     }
   });
@@ -29,13 +37,12 @@ const initializeSocket = (server) => {
           ...message,
           senderName: user ? user.name : "Unknown user"
         };
-        // Emit to all sockets in the room except the sender
+        
         socket.to(message.conversationId).emit('messageReceived', messageToSend);
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
     });
-    
 
     socket.on('disconnect', () => {
       console.log('User disconnected');

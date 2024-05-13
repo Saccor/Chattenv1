@@ -56,11 +56,10 @@ export const fetchCurrentUser = () => {
     .then(response => {
       const { user, isAuthenticated } = response.data;
       if (isAuthenticated) {
-       
         const token = response.headers['authorization'];
         localStorage.setItem('authToken', token);
       }
-      return response;
+      return { ...response, user }; // Include user in the returned object
     })
     .catch(error => {
       console.error('Error fetching current user:', error);

@@ -34,7 +34,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-
 app.use(express.json());
 connectDB();
 app.use(session({
@@ -46,7 +45,7 @@ app.use(session({
   }),
   cookie: {
     maxAge: 1800000, // 30 minutes
-    secure: false, // Set to false because we're not using HTTPS
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
     httpOnly: true,
   },
 }));
@@ -62,4 +61,8 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV}`);
+  console.log(`Session cookie secure: ${process.env.NODE_ENV === 'production'}`);
+});

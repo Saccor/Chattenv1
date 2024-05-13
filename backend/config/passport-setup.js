@@ -33,7 +33,6 @@ async (accessToken, refreshToken, profile, done) => {
 }
 ));
 
-
 // Serialize user into the sessions
 passport.serializeUser((user, done) => {
   done(null, user.id);
@@ -51,3 +50,4 @@ passport.deserializeUser(async (id, done) => {
 });
 
 export default passport;
+

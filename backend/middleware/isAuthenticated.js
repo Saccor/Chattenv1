@@ -7,11 +7,12 @@
  * @param {NextFunction} next - The next middleware function in the stack.
  */
 const isAuthenticated = (req, res, next) => {
-    if (req.isAuthenticated()) {  // `req.isAuthenticated()` is a function added by Passport
-      return next();
-    }
-    res.status(401).json({ message: 'User not authenticated' });  // Send 401 status if not authenticated
-  };
-  
-  export default isAuthenticated;
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ message: 'User not authenticated' });
+};
+
+export default isAuthenticated;
+
   

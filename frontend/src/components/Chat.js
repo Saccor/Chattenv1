@@ -10,7 +10,6 @@ import {
 } from '../services/api';
 import './Chat.css';
 
-// Dynamically determine the server URL based on the environment
 const serverUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://saccoschatt.onrender.com';
 
 const socket = io(serverUrl, { withCredentials: true });
@@ -28,7 +27,12 @@ function Chat() {
 
   useEffect(() => {
     fetchCurrentUser().then(response => {
-      setCurrentUserId(response.data.user._id);
+      if (response.isAuthenticated) {
+        setCurrentUserId(response.user._id);
+      } else {
+        // Redirect to login if not authenticated
+        window.location.href = '/login';
+      }
       setIsLoadingCurrentUser(false);
     }).catch(error => {
       console.error('Error fetching current user:', error);
@@ -53,16 +57,14 @@ function Chat() {
       fetchMessages(activeConversation._id).then(response => {
         const messagesWithSenderNames = response.data.map(message => ({
           ...message,
-          senderName: message.senderId.name // Assuming 'name' is the property that contains the sender's name
+          senderName: message.senderId.name
         }));
         setMessages(messagesWithSenderNames);
       }).catch(error => console.error('Error fetching messages:', error));
 
-      // Join the conversation on socket
       socket.emit('joinConversation', activeConversation._id);
     }
 
-    // Listen for new messages
     const handleMessageReceived = message => {
       if (message.conversationId === activeConversation?._id) {
         setMessages(prevMessages => [...prevMessages, message]);

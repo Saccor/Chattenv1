@@ -3,7 +3,6 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/User.js';
 import dotenv from 'dotenv';
 
-
 // Load environment variables
 dotenv.config();
 
@@ -14,7 +13,6 @@ passport.use(new GoogleStrategy({
 },
 async (accessToken, refreshToken, profile, done) => {
   try {
-    // Find or create the user based on Google profile
     let user = await User.findOne({ googleId: profile.id });
     if (!user) {
       user = await User.create({
@@ -23,7 +21,7 @@ async (accessToken, refreshToken, profile, done) => {
         name: profile.displayName,
         avatar: profile.photos[0].value,
       });
-      console.log('New user created:', user); // Logging new user creation
+      console.log('New user created:', user);
     }
     done(null, user);
   } catch (error) {
@@ -50,4 +48,3 @@ passport.deserializeUser(async (id, done) => {
 });
 
 export default passport;
-

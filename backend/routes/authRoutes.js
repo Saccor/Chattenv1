@@ -1,4 +1,3 @@
-// authRoutes.js
 import express from 'express';
 import passport from 'passport';
 
@@ -34,10 +33,10 @@ router.get('/logout', (req, res) => {
 
 router.get('/check', (req, res) => {
     if (req.isAuthenticated()) {
-        res.json({ isAuthenticated: true, user: req.user });
+      res.json({ isAuthenticated: true, user: req.user });
     } else {
-        res.json({ isAuthenticated: false });
+      res.json({ isAuthenticated: false });
     }
-});
+  });
 
 export default router;

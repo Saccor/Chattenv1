@@ -10,12 +10,13 @@ router.get('/google',
 );
 
 router.get('/google/callback',
-    passport.authenticate('google', { failureRedirect: '/login/failure' }),
-    (req, res) => {
-        // Successful authentication, redirect based on environment.
-        const redirectURL = process.env.NODE_ENV === 'production' ? 'https://chattenv1.vercel.app/chat' : 'http://localhost:3000/chat';
-        res.redirect(redirectURL);
-    }
+  passport.authenticate('google', { failureRedirect: '/login/failure' }),
+  (req, res) => {
+    console.log('Google OAuth callback received.');
+    console.log('Authenticated user:', req.user);
+    const redirectURL = process.env.NODE_ENV === 'production' ? 'https://chattenv1.vercel.app/chat' : 'http://localhost:3000/chat';
+    res.redirect(redirectURL);
+  }
 );
 
 router.get('/login/failure', (req, res) => {

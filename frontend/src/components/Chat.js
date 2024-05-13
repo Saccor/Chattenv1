@@ -15,7 +15,6 @@ const serverUrl = window.location.hostname === 'localhost' ? 'http://localhost:5
 
 const socket = io(serverUrl, { withCredentials: true });
 
-
 function Chat() {
   const [conversations, setConversations] = useState([]);
   const [users, setUsers] = useState([]);
@@ -43,12 +42,10 @@ function Chat() {
       }));
       setConversations(updatedConversations);
     }).catch(error => console.error('Error fetching conversations:', error));
-    
 
     fetchUsers().then(response => {
       setUsers(response.data);
     }).catch(error => console.error('Error fetching users:', error));
-
   }, [searchTerm]);
 
   useEffect(() => {
@@ -72,7 +69,7 @@ function Chat() {
         setConversations(prevConversations => {
           return prevConversations.map(conv => {
             if (conv._id === message.conversationId) {
-              return {...conv, isActive: true};
+              return { ...conv, isActive: true };
             }
             return conv;
           }).sort((a, b) => b.isActive - a.isActive);
@@ -80,7 +77,6 @@ function Chat() {
       }
     };
 
-    
     socket.on('messageReceived', handleMessageReceived);
 
     return () => {
@@ -97,7 +93,7 @@ function Chat() {
       return;
     }
 
-    const existingConversation = conversations.find(c => 
+    const existingConversation = conversations.find(c =>
       c.participants.sort().join(',') === [currentUserId, userId].sort().join(',') &&
       c.participants.length === 2
     );
@@ -144,33 +140,27 @@ function Chat() {
       {isLoadingCurrentUser ? (
         <p>Loading user information...</p>
       ) : (
-        <>
-          <input
-            type="text"
-            placeholder="Search Conversations..."
-            onChange={handleSearchChange}
-            className="search-input"
-          />
-          <div className="conversation-list">
-            {conversations.map(conv => (
-              <div key={conv._id} onClick={() => setActiveConversation(conv)}
-                className={`conversation-item ${activeConversation?._id === conv._id ? 'active' : ''} ${conv.isActive ? 'conversation-active' : ''}`}>
-                Conversation with {conv.participantNames.join(', ')}
-                <div className="timestamp">
-                  {conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleString() : 'No Messages'}
+        <div className="chat-inner">
+          <div className="sidebar">
+            <input
+              type="text"
+              placeholder="Search Conversations..."
+              onChange={handleSearchChange}
+              className="search-input"
+            />
+            <div className="conversation-list">
+              {conversations.map(conv => (
+                <div key={conv._id} onClick={() => setActiveConversation(conv)}
+                  className={`conversation-item ${activeConversation?._id === conv._id ? 'active' : ''} ${conv.isActive ? 'conversation-active' : ''}`}>
+                  Conversation with {conv.participantNames.join(', ')}
+                  <div className="timestamp">
+                    {conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleString() : 'No Messages'}
+                  </div>
                 </div>
-              </div>
-            )).sort((a, b) => {
-              if (a.isActive && !b.isActive) {
-                return -1;
-              } else if (!a.isActive && b.isActive) {
-                return 1;
-              } else {
-                return 0;
-              }
-            })}
+              ))}
+            </div>
           </div>
-          <div className="chat-messages">
+          <div className="main-content">
             <select value={selectedUserId} onChange={e => handleSelectUser(e.target.value)} className="user-select">
               <option value="">Select a user to chat</option>
               {users.map(user => (
@@ -186,7 +176,7 @@ function Chat() {
                     </div>
                   ))}
                 </div>
-                <div>
+                <div className="message-input-container">
                   <input
                     type="text"
                     value={newMessage}
@@ -199,7 +189,7 @@ function Chat() {
               </>
             )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

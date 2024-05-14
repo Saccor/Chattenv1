@@ -10,6 +10,7 @@ const initializeSocket = (server) => {
         if (!origin || allowedOrigins.indexOf(origin) !== -1) {
           callback(null, true);
         } else {
+          console.error(`Blocked by CORS: ${origin}`);
           callback(new Error('Not allowed by CORS'));
         }
       },
@@ -33,12 +34,16 @@ const initializeSocket = (server) => {
     socket.on('newMessage', async (message) => {
       try {
         const user = await User.findById(message.senderId);
+        if (!user) {
+          console.error('User not found:', message.senderId);
+          return;
+        }
         const messageToSend = {
           ...message,
-          senderName: user ? user.name : "Unknown user"
+          senderName: user.name
         };
-        
         socket.to(message.conversationId).emit('messageReceived', messageToSend);
+        console.log(`Message sent to conversation ${message.conversationId}`);
       } catch (error) {
         console.error('Error fetching user data:', error);
       }

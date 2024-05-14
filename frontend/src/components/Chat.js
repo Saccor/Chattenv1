@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
 import {
   fetchConversations,
@@ -7,6 +7,9 @@ import {
   fetchUsers,
   fetchCurrentUser,
   fetchMessages,
+  deleteConversation,
+  blockUser,
+  removeUser,
 } from '../services/api';
 import './Chat.css';
 
@@ -18,6 +21,7 @@ function Chat() {
   const [conversations, setConversations] = useState([]);
   const [users, setUsers] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentUserName, setCurrentUserName] = useState('');
   const [isLoadingCurrentUser, setIsLoadingCurrentUser] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [activeConversation, setActiveConversation] = useState(null);
@@ -25,10 +29,22 @@ function Chat() {
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+  const fetchAllConversations = useCallback(() => {
+    fetchConversations(searchTerm).then(response => {
+      const updatedConversations = response.data.map(conv => ({
+        ...conv,
+        isActive: false,
+        flash: false,
+      }));
+      setConversations(updatedConversations);
+    }).catch(error => console.error('Error fetching conversations:', error));
+  }, [searchTerm]);
+
   useEffect(() => {
     fetchCurrentUser().then(response => {
       if (response.isAuthenticated) {
         setCurrentUserId(response.user._id);
+        setCurrentUserName(response.user.name);
       } else {
         // Redirect to login if not authenticated
         window.location.href = '/login';
@@ -38,26 +54,23 @@ function Chat() {
       console.error('Error fetching current user:', error);
       setIsLoadingCurrentUser(false);
     });
+  }, []);
 
-    fetchConversations(searchTerm).then(response => {
-      const updatedConversations = response.data.map(conv => ({
-        ...conv,
-        isActive: false
-      }));
-      setConversations(updatedConversations);
-    }).catch(error => console.error('Error fetching conversations:', error));
-
-    fetchUsers().then(response => {
-      setUsers(response.data);
-    }).catch(error => console.error('Error fetching users:', error));
-  }, [searchTerm]);
+  useEffect(() => {
+    if (!isLoadingCurrentUser) {
+      fetchAllConversations();
+      fetchUsers().then(response => {
+        setUsers(response.data);
+      }).catch(error => console.error('Error fetching users:', error));
+    }
+  }, [fetchAllConversations, isLoadingCurrentUser]);
 
   useEffect(() => {
     if (activeConversation) {
       fetchMessages(activeConversation._id).then(response => {
         const messagesWithSenderNames = response.data.map(message => ({
           ...message,
-          senderName: message.senderId.name
+          senderName: message.senderId.name,
         }));
         setMessages(messagesWithSenderNames);
       }).catch(error => console.error('Error fetching messages:', error));
@@ -66,16 +79,32 @@ function Chat() {
     }
 
     const handleMessageReceived = message => {
+      setConversations(prevConversations => {
+        let updatedConversations = prevConversations.map(conv => {
+          if (conv._id === message.conversationId) {
+            return { ...conv, isActive: true, lastMessage: message, flash: true };
+          }
+          return conv;
+        });
+
+        // If the conversation does not exist in the list, fetch and add it
+        if (!updatedConversations.some(conv => conv._id === message.conversationId)) {
+          fetchAllConversations();
+        }
+
+        // Ensure the conversation with the new message appears at the top
+        updatedConversations = updatedConversations.map(conv => {
+          if (conv._id === message.conversationId) {
+            return { ...conv, lastMessage: message };
+          }
+          return conv;
+        });
+
+        return updatedConversations.sort((a, b) => new Date(b.lastMessage?.timestamp) - new Date(a.lastMessage?.timestamp));
+      });
+
       if (message.conversationId === activeConversation?._id) {
         setMessages(prevMessages => [...prevMessages, message]);
-        setConversations(prevConversations => {
-          return prevConversations.map(conv => {
-            if (conv._id === message.conversationId) {
-              return { ...conv, isActive: true };
-            }
-            return conv;
-          }).sort((a, b) => b.isActive - a.isActive);
-        });
       }
     };
 
@@ -87,7 +116,7 @@ function Chat() {
         socket.emit('leaveConversation', activeConversation._id);
       }
     };
-  }, [activeConversation]);
+  }, [activeConversation, fetchAllConversations]);
 
   const handleSelectUser = userId => {
     setSelectedUserId(userId);
@@ -121,20 +150,64 @@ function Chat() {
         senderId: currentUserId,
         text: newMessage,
         conversationId: activeConversation._id,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
       sendMessage(activeConversation._id, newMessage).then(() => {
         socket.emit('newMessage', messageToSend);
         setMessages(prevMessages => [...prevMessages, messageToSend]);
         setNewMessage('');
+        setConversations(prevConversations => {
+          let updatedConversations = prevConversations.map(conv => {
+            if (conv._id === activeConversation._id) {
+              return { ...conv, lastMessage: messageToSend, flash: true };
+            }
+            return conv;
+          });
+
+          // Ensure the conversation with the new message appears at the top
+          updatedConversations = updatedConversations.map(conv => {
+            if (conv._id === activeConversation._id) {
+              return { ...conv, lastMessage: messageToSend };
+            }
+            return conv;
+          });
+
+          return updatedConversations.sort((a, b) => new Date(b.lastMessage?.timestamp) - new Date(a.lastMessage?.timestamp));
+        });
       }).catch(error => {
         console.error('Error sending message:', error);
       });
     }
   };
 
-  const handleSearchChange = (event) => {
+  const handleSearchChange = event => {
     setSearchTerm(event.target.value.toLowerCase());
+    fetchAllConversations();
+  };
+
+  const handleDeleteConversation = conversationId => {
+    deleteConversation(conversationId).then(() => {
+      setConversations(conversations.filter(conv => conv._id !== conversationId));
+      setActiveConversation(null);
+      setMessages([]);
+    }).catch(error => console.error('Error deleting conversation:', error));
+  };
+
+  const handleBlockUser = contactId => {
+    blockUser(contactId).then(() => {
+      alert('User blocked successfully');
+    }).catch(error => console.error('Error blocking user:', error));
+  };
+
+  const handleRemoveUser = contactId => {
+    removeUser(contactId).then(() => {
+      alert('User removed successfully');
+    }).catch(error => console.error('Error removing user:', error));
+  };
+
+  const getConversationDisplayName = (conv) => {
+    const otherParticipants = conv.participantNames.filter(name => name !== currentUserName);
+    return `Conversation with ${otherParticipants.join(', ')}`;
   };
 
   return (
@@ -152,9 +225,15 @@ function Chat() {
             />
             <div className="conversation-list">
               {conversations.map(conv => (
-                <div key={conv._id} onClick={() => setActiveConversation(conv)}
-                  className={`conversation-item ${activeConversation?._id === conv._id ? 'active' : ''} ${conv.isActive ? 'conversation-active' : ''}`}>
-                  Conversation with {conv.participantNames.join(', ')}
+                <div
+                  key={conv._id}
+                  onClick={() => setActiveConversation(conv)}
+                  className={`conversation-item ${activeConversation?._id === conv._id ? 'active' : ''} ${conv.isActive ? 'conversation-active' : ''} ${conv.flash ? 'flash' : ''}`}
+                  onAnimationEnd={() => {
+                    setConversations(prevConversations => prevConversations.map(c => c._id === conv._id ? { ...c, flash: false } : c));
+                  }}
+                >
+                  {getConversationDisplayName(conv)}
                   <div className="timestamp">
                     {conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleString() : 'No Messages'}
                   </div>
@@ -169,6 +248,13 @@ function Chat() {
                 <option key={user._id} value={user._id}>{user.name}</option>
               ))}
             </select>
+            <button onClick={() => handleBlockUser(selectedUserId)} className="block-button">Block</button>
+            <button onClick={() => handleRemoveUser(selectedUserId)} className="remove-button">Remove</button>
+            {activeConversation && (
+              <div className="conversation-actions">
+                <button onClick={() => handleDeleteConversation(activeConversation._id)} className="delete-button">Delete Conversation</button>
+              </div>
+            )}
             {activeConversation && (
               <>
                 <div className="message-area">

@@ -74,3 +74,16 @@ export const logoutUser = () => {
       throw error;
     });
 };
+
+
+export const deleteConversation = (conversationId) => {
+  return client.delete(`/conversations/${conversationId}`);
+};
+
+export const blockUser = (contactId) => {
+  return client.post('/users/block', { contactId });
+};
+
+export const removeUser = (contactId) => {
+  return client.post('/users/remove', { contactId });
+};

@@ -12,20 +12,23 @@ import connectDB from './config/mongoose.setup.js';
 import userRoutes from './routes/userRoutes.js';
 import initializeSocket from './sockets/socket.js';
 
+// Load environment variables
 dotenv.config();
+
 const app = express();
 const server = http.createServer(app);
 
-// Socket.IO setup
+// Initialize Socket.IO
 initializeSocket(server);
 
 // Dynamically set the CORS origin based on environment
+const allowedOrigins = ['https://chattenv1.vercel.app', 'http://localhost:3000'];
 app.use(cors({
   origin: function (origin, callback) {
-    const allowedOrigins = ['https://chattenv1.vercel.app', 'http://localhost:3000'];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error(`Blocked by CORS: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -35,11 +38,15 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Connect to MongoDB
 connectDB();
+
+// Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'default_secret',
-  resave: false,  // This should be false to avoid unnecessary session resaves
-  saveUninitialized: false,  // This should be false to avoid creating uninitialized sessions
+  resave: false,  // Avoid unnecessary session resaves
+  saveUninitialized: false,  // Avoid creating uninitialized sessions
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI
   }),
@@ -50,17 +57,24 @@ app.use(session({
     sameSite: 'lax', // Helps protect against CSRF attacks
   },
 }));
+
+// Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+// API routes
 app.use('/auth', authRoutes);
 app.use('/messages', messageRoutes);
 app.use('/conversations', conversationRoutes);
 app.use('/users', userRoutes);
+
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
+// Start the server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

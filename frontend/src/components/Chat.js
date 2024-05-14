@@ -70,7 +70,7 @@ function Chat() {
       fetchMessages(activeConversation._id).then(response => {
         const messagesWithSenderNames = response.data.map(message => ({
           ...message,
-          senderName: message.senderId.name,
+          senderName: message.senderId._id === currentUserId ? 'You' : message.senderId.name,
         }));
         setMessages(messagesWithSenderNames);
       }).catch(error => console.error('Error fetching messages:', error));
@@ -104,7 +104,10 @@ function Chat() {
       });
 
       if (message.conversationId === activeConversation?._id) {
-        setMessages(prevMessages => [...prevMessages, message]);
+        setMessages(prevMessages => [...prevMessages, {
+          ...message,
+          senderName: message.senderId._id === currentUserId ? 'You' : message.senderId.name,
+        }]);
       }
     };
 
@@ -116,7 +119,7 @@ function Chat() {
         socket.emit('leaveConversation', activeConversation._id);
       }
     };
-  }, [activeConversation, fetchAllConversations]);
+  }, [activeConversation, fetchAllConversations, currentUserId]);
 
   const handleSelectUser = userId => {
     setSelectedUserId(userId);
@@ -154,7 +157,10 @@ function Chat() {
       };
       sendMessage(activeConversation._id, newMessage).then(() => {
         socket.emit('newMessage', messageToSend);
-        setMessages(prevMessages => [...prevMessages, messageToSend]);
+        setMessages(prevMessages => [...prevMessages, {
+          ...messageToSend,
+          senderName: 'You',
+        }]);
         setNewMessage('');
         setConversations(prevConversations => {
           let updatedConversations = prevConversations.map(conv => {
@@ -259,8 +265,8 @@ function Chat() {
               <>
                 <div className="message-area">
                   {messages.map((msg, index) => (
-                    <div key={index} className={msg.senderId === currentUserId ? 'message-sender' : 'message-recipient'}>
-                      {msg.senderId === currentUserId ? 'You' : msg.senderName}: {msg.text}
+                    <div key={index} className={`message ${msg.senderId._id === currentUserId ? 'message-sender' : 'message-recipient'}`}>
+                      {msg.senderId._id === currentUserId ? 'You' : msg.senderName}: {msg.text}
                     </div>
                   ))}
                 </div>

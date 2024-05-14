@@ -1,30 +1,91 @@
+Backend Summary for Frontend Development
+General Structure
+Server Setup (server.js)
 
-Backend Map Summary:
-Database Setup:
+Initializes Express server with necessary middleware.
+Configures CORS to allow specific origins.
+Connects to MongoDB.
+Sets up session management.
+Initializes Passport for authentication.
+Defines routes for authentication, users, messages, and conversations.
+Initializes Socket.IO for real-time message handling.
+Socket.IO (sockets/socket.js)
 
-mongoose.setup.js: Connects to MongoDB using Mongoose.
-Models:
+Configures Socket.IO with CORS settings.
+Handles events: joinConversation, leaveConversation, newMessage, and disconnect.
+Emits messageReceived event to broadcast new messages.
+Database Connection (mongoose.setup.js)
 
-User: Stores user details (Google ID, name, email, profile photo URL).
-Message: Stores messages (sender ID, text, timestamp, conversation ID).
-Conversation: Stores conversations (participants, participant names, message references, timestamps).
-Authentication:
+Establishes a connection to MongoDB using Mongoose.
+Authentication
+Passport Setup (passport-setup.js)
 
-passport-setup.js: Google OAuth for user authentication.
-isAuthenticated.js: Middleware to check if a user is authenticated.
-Routes:
+Configures Google OAuth 2.0 for user authentication.
+Serializes and deserializes user sessions.
+Auth Routes (authRoutes.js)
 
-authRoutes.js: Handles Google login, logout, and authentication check.
-userRoutes.js: Fetch all users, protected by authentication.
-messageRoutes.js: Send and fetch messages for a conversation, protected by authentication.
-conversationsRoutes.js: Fetch and create conversations, includes participant names and last message details, protected by authentication.
-Real-time Communication:
+Defines routes for Google authentication (/google, /google/callback).
+Handles login failure and logout.
+Provides a route to check authentication status.
+Models
+User Model (User.js)
 
-socket.js: Manages Socket.IO connections, joins/leaves conversations, sends/receives messages.
-Server Setup:
+Fields: googleId, name, email, profilePhotoUrl.
+Uses Mongoose for schema definition and model creation.
+Message Model (Message.js)
 
-server.js: Configures Express, session handling, CORS, connects to MongoDB, initializes routes and Socket.IO.
-Key IDs and Fields:
-User: _id, googleId, name, email, profilePhotoUrl
-Message: _id, senderId, text, timestamp, conversationId
-Conversation: _id, participants, participantNames, messages, createdAt
+Fields: senderId, text, timestamp, conversationId.
+References User and Conversation models.
+Conversation Model (Conversation.js)
+
+Fields: participants, participantNames, messages, createdAt.
+Creates text index on participantNames for search functionality.
+Middleware
+isAuthenticated Middleware (isAuthenticated.js)
+Checks if a user is authenticated.
+Sends a 401 response if not authenticated.
+Routes
+User Routes (userRoutes.js)
+
+Fetches all users with names and profile photo URLs.
+Uses isAuthenticated middleware.
+Message Routes (messageRoutes.js)
+
+POST /messages: Sends a new message.
+GET /messages/:conversationId: Fetches messages for a conversation.
+Uses isAuthenticated middleware.
+Conversation Routes (conversationsRoutes.js)
+
+GET /conversations: Fetches all conversations for the authenticated user.
+POST /conversations: Creates a new conversation.
+GET /conversations/earlier: Fetches earlier messages for conversations.
+Uses isAuthenticated middleware.
+Environment Configuration
+Environment Variables
+MONGO_URI: MongoDB connection string.
+SESSION_SECRET: Secret for session management.
+GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET: Credentials for Google OAuth.
+Frontend Integration Points
+Authentication
+
+Google OAuth login and logout through /auth/google and /auth/logout.
+Check authentication status via /auth/check.
+User Data
+
+Fetch user data with /users.
+Messaging
+
+Send messages to /messages.
+Fetch messages for a conversation from /messages/:conversationId.
+Conversations
+
+Fetch all conversations via /conversations.
+Create new conversations with /conversations.
+Fetch conversations with earlier messages via /conversations/earlier.
+Real-Time Updates
+
+Use Socket.IO to handle real-time events:
+Join a conversation: joinConversation.
+Leave a conversation: leaveConversation.
+Send a message: newMessage.
+Receive messages: messageReceived.

@@ -46,6 +46,7 @@ function Chat() {
         setCurrentUserId(response.user._id);
         setCurrentUserName(response.user.name);
       } else {
+        // Redirect to login if not authenticated
         window.location.href = '/login';
       }
       setIsLoadingCurrentUser(false);
@@ -74,10 +75,12 @@ function Chat() {
           return conv;
         });
 
+        // If the conversation does not exist in the list, fetch and add it
         if (!updatedConversations.some(conv => conv._id === message.conversationId)) {
           fetchAllConversations();
         }
 
+        // Ensure the conversation with the new message appears at the top
         updatedConversations = updatedConversations.map(conv => {
           if (conv._id === message.conversationId) {
             return { ...conv, lastMessage: message };
@@ -169,6 +172,7 @@ function Chat() {
             return conv;
           });
 
+          // Ensure the conversation with the new message appears at the top
           updatedConversations = updatedConversations.map(conv => {
             if (conv._id === activeConversation._id) {
               return { ...conv, lastMessage: messageToSend };
@@ -206,6 +210,7 @@ function Chat() {
     blockUser(userId)
       .then(() => {
         alert('User blocked successfully');
+        // Optionally, you can also update the UI to reflect the blocked status
       })
       .catch(error => {
         console.error('Error blocking user:', error);
@@ -217,6 +222,7 @@ function Chat() {
     unblockUser(userId)
       .then(() => {
         alert('User unblocked successfully');
+        // Optionally, you can also update the UI to reflect the unblocked status
       })
       .catch(error => {
         console.error('Error unblocking user:', error);
@@ -227,6 +233,11 @@ function Chat() {
   const getConversationDisplayName = (conv) => {
     const otherParticipants = conv.participantNames.filter(name => name !== currentUserName);
     return `Conversation with ${otherParticipants.join(', ')}`;
+  };
+
+  const isUserBlocked = (userId) => {
+    const user = users.find(user => user._id === userId);
+    return user ? user.blockedUsers.includes(currentUserId) : false;
   };
 
   return (
@@ -259,7 +270,11 @@ function Chat() {
                   </div>
                   <div className="conversation-actions">
                     <button onClick={() => handleDeleteConversation(conv._id)} className="delete-button">Delete</button>
-                    <button onClick={() => handleBlockUser(conv.participants.find(id => id !== currentUserId))} className="block-button">Block</button>
+                    {!isUserBlocked(conv.participants.find(id => id !== currentUserId)) ? (
+                      <button onClick={() => handleBlockUser(conv.participants.find(id => id !== currentUserId))} className="block-button">Block</button>
+                    ) : (
+                      <button onClick={() => handleUnblockUser(conv.participants.find(id => id !== currentUserId))} className="unblock-button">Unblock</button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -272,8 +287,6 @@ function Chat() {
                 <option key={user._id} value={user._id}>{user.name}</option>
               ))}
             </select>
-            <button onClick={() => handleBlockUser(selectedUserId)} className="block-button">Block</button>
-            <button onClick={() => handleUnblockUser(selectedUserId)} className="unblock-button">Unblock</button>
             {activeConversation && (
               <>
                 <div className="message-area">

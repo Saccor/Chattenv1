@@ -125,3 +125,38 @@
   justify-content: flex-end;
   padding: 10px;
 }
+
+
+/* Add these to your existing CSS */
+
+.conversation-item {
+  position: relative;
+}
+
+.conversation-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+
+.delete-button,
+.block-button {
+  padding: 5px;
+  font-size: 0.8em;
+  background-color: #d9534f;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.block-button {
+  background-color: #f0ad4e;
+}
+
+.delete-button:hover,
+.block-button:hover {
+  opacity: 0.8;
+}
+
+/* Keep your other styles as they are */

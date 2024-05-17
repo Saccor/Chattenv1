@@ -9,7 +9,7 @@ import {
   fetchMessages,
   deleteConversation,
   blockUser,
-  removeUser,
+  unblockUser,
 } from '../services/api';
 import './Chat.css';
 
@@ -66,18 +66,6 @@ function Chat() {
   }, [fetchAllConversations, isLoadingCurrentUser]);
 
   useEffect(() => {
-    if (activeConversation) {
-      fetchMessages(activeConversation._id).then(response => {
-        const messagesWithSenderNames = response.data.map(message => ({
-          ...message,
-          senderName: message.senderId._id === currentUserId ? 'You' : message.senderId.name,
-        }));
-        setMessages(messagesWithSenderNames);
-      }).catch(error => console.error('Error fetching messages:', error));
-
-      socket.emit('joinConversation', activeConversation._id);
-    }
-
     const handleMessageReceived = message => {
       setConversations(prevConversations => {
         let updatedConversations = prevConversations.map(conv => {
@@ -106,7 +94,7 @@ function Chat() {
       if (message.conversationId === activeConversation?._id) {
         setMessages(prevMessages => [...prevMessages, {
           ...message,
-          senderName: message.senderId._id === currentUserId ? 'You' : message.senderId.name,
+          senderName: message.senderId === currentUserId ? 'You' : message.senderId.name,
         }]);
       }
     };
@@ -120,6 +108,20 @@ function Chat() {
       }
     };
   }, [activeConversation, fetchAllConversations, currentUserId]);
+
+  useEffect(() => {
+    if (activeConversation) {
+      fetchMessages(activeConversation._id).then(response => {
+        const messagesWithSenderNames = response.data.map(message => ({
+          ...message,
+          senderName: message.senderId === currentUserId ? 'You' : message.senderId.name,
+        }));
+        setMessages(messagesWithSenderNames);
+      }).catch(error => console.error('Error fetching messages:', error));
+
+      socket.emit('joinConversation', activeConversation._id);
+    }
+  }, [activeConversation, currentUserId]);
 
   const handleSelectUser = userId => {
     setSelectedUserId(userId);
@@ -191,24 +193,41 @@ function Chat() {
     fetchAllConversations();
   };
 
-  const handleDeleteConversation = conversationId => {
-    deleteConversation(conversationId).then(() => {
-      setConversations(conversations.filter(conv => conv._id !== conversationId));
-      setActiveConversation(null);
-      setMessages([]);
-    }).catch(error => console.error('Error deleting conversation:', error));
+  const handleDeleteConversation = (conversationId) => {
+    deleteConversation(conversationId)
+      .then(() => {
+        setConversations(conversations.filter(conv => conv._id !== conversationId));
+        setActiveConversation(null);
+        setMessages([]);
+      })
+      .catch(error => {
+        console.error('Error deleting conversation:', error);
+        alert('An error occurred while trying to delete the conversation.');
+      });
   };
 
-  const handleBlockUser = contactId => {
-    blockUser(contactId).then(() => {
-      alert('User blocked successfully');
-    }).catch(error => console.error('Error blocking user:', error));
+  const handleBlockUser = (userId) => {
+    blockUser(userId)
+      .then(() => {
+        alert('User blocked successfully');
+        // Optionally, you can also update the UI to reflect the blocked status
+      })
+      .catch(error => {
+        console.error('Error blocking user:', error);
+        alert('An error occurred while trying to block the user.');
+      });
   };
 
-  const handleRemoveUser = contactId => {
-    removeUser(contactId).then(() => {
-      alert('User removed successfully');
-    }).catch(error => console.error('Error removing user:', error));
+  const handleUnblockUser = (userId) => {
+    unblockUser(userId)
+      .then(() => {
+        alert('User unblocked successfully');
+        // Optionally, you can also update the UI to reflect the unblocked status
+      })
+      .catch(error => {
+        console.error('Error unblocking user:', error);
+        alert('An error occurred while trying to unblock the user.');
+      });
   };
 
   const getConversationDisplayName = (conv) => {
@@ -233,15 +252,20 @@ function Chat() {
               {conversations.map(conv => (
                 <div
                   key={conv._id}
-                  onClick={() => setActiveConversation(conv)}
                   className={`conversation-item ${activeConversation?._id === conv._id ? 'active' : ''} ${conv.isActive ? 'conversation-active' : ''} ${conv.flash ? 'flash' : ''}`}
                   onAnimationEnd={() => {
                     setConversations(prevConversations => prevConversations.map(c => c._id === conv._id ? { ...c, flash: false } : c));
                   }}
                 >
-                  {getConversationDisplayName(conv)}
-                  <div className="timestamp">
-                    {conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleString() : 'No Messages'}
+                  <div onClick={() => setActiveConversation(conv)}>
+                    {getConversationDisplayName(conv)}
+                    <div className="timestamp">
+                      {conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleString() : 'No Messages'}
+                    </div>
+                  </div>
+                  <div className="conversation-actions">
+                    <button onClick={() => handleDeleteConversation(conv._id)} className="delete-button">Delete</button>
+                    <button onClick={() => handleBlockUser(conv.participants.find(id => id !== currentUserId))} className="block-button">Block</button>
                   </div>
                 </div>
               ))}
@@ -255,12 +279,7 @@ function Chat() {
               ))}
             </select>
             <button onClick={() => handleBlockUser(selectedUserId)} className="block-button">Block</button>
-            <button onClick={() => handleRemoveUser(selectedUserId)} className="remove-button">Remove</button>
-            {activeConversation && (
-              <div className="conversation-actions">
-                <button onClick={() => handleDeleteConversation(activeConversation._id)} className="delete-button">Delete Conversation</button>
-              </div>
-            )}
+            <button onClick={() => handleUnblockUser(selectedUserId)} className="unblock-button">Unblock</button>
             {activeConversation && (
               <>
                 <div className="message-area">

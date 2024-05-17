@@ -51,7 +51,6 @@ export const fetchCurrentUser = () => {
     .then(response => {
       const { user, isAuthenticated } = response.data;
       if (isAuthenticated) {
-        // With session-based authentication, the token is managed by the browser's cookies
         console.log('Fetched current user:', user);
         return { isAuthenticated, user };
       }
@@ -75,15 +74,25 @@ export const logoutUser = () => {
     });
 };
 
-
 export const deleteConversation = (conversationId) => {
+  console.log(`Sending request to delete conversation with ID: ${conversationId}`);
   return client.delete(`/conversations/${conversationId}`);
 };
 
+
 export const blockUser = (contactId) => {
-  return client.post('/users/block', { contactId });
+  return client.post('/users/block', { contactId })
+    .catch(error => {
+      console.error('Error blocking user:', error);
+      throw error;
+    });
 };
 
-export const removeUser = (contactId) => {
-  return client.post('/users/remove', { contactId });
+export const unblockUser = (contactId) => {
+  return client.post('/users/unblock', { contactId })
+    .catch(error => {
+      console.error('Error unblocking user:', error);
+      throw error;
+    });
 };
+

@@ -10,29 +10,34 @@ const router = express.Router();
 // GET endpoint to fetch all conversations for a user with the last message details
 router.get('/', isAuthenticated, async (req, res) => {
     const userId = req.user._id;
-
+    const searchTerm = req.query.search || '';
+  
     try {
-        const conversations = await Conversation.find({ participants: userId })
-            .populate('participants', 'name profilePhotoUrl') // Ensure you are populating the necessary fields
-            .lean();
-
-        // Map through conversations to append the last message details
-        const conversationsWithLastMessage = await Promise.all(conversations.map(async (conversation) => {
-            const lastMessage = await Message.findOne({ conversationId: conversation._id }).sort({ timestamp: -1 }).lean();
-            return {
-                ...conversation,
-                lastMessage: lastMessage ? {
-                    text: lastMessage.text,
-                    timestamp: lastMessage.timestamp,
-                    senderId: lastMessage.senderId
-                } : null // Include a fallback if no messages are found
-            };
-        }));
-
-        res.json(conversationsWithLastMessage);
+      const conversations = await Conversation.find({
+        participants: userId,
+        participantNames: { $regex: searchTerm, $options: 'i' } // case-insensitive search
+      })
+        .populate('participants', 'name profilePhotoUrl')
+        .lean();
+  
+      const conversationsWithLastMessage = await Promise.all(
+        conversations.map(async (conversation) => {
+          const lastMessage = await Message.findOne({ conversationId: conversation._id }).sort({ timestamp: -1 }).lean();
+          return {
+            ...conversation,
+            lastMessage: lastMessage ? {
+              text: lastMessage.text,
+              timestamp: lastMessage.timestamp,
+              senderId: lastMessage.senderId
+            } : null
+          };
+        })
+      );
+  
+      res.json(conversationsWithLastMessage);
     } catch (error) {
-        console.error('Error fetching conversations:', error);
-        res.status(500).json({ error: 'Server Error: Unable to fetch conversations.' });
+      console.error('Error fetching conversations:', error);
+      res.status(500).json({ error: 'Server Error: Unable to fetch conversations.' });
     }
 });
 
@@ -96,6 +101,30 @@ router.get('/earlier', isAuthenticated, async (req, res) => {
       console.error('Error fetching conversations:', error);
       res.status(500).json({ error: 'Server Error: Unable to fetch conversations.' });
     }
-  });
+});
+
+// Delete a conversation by ID
+router.delete('/:id', isAuthenticated, async (req, res) => {
+  try {
+    console.log(`Attempting to delete conversation with ID: ${req.params.id}`);
+    const conversation = await Conversation.findById(req.params.id);
+    if (!conversation) {
+      console.log('Conversation not found');
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    if (!conversation.participants.includes(req.user._id)) {
+      console.log('User not authorized to delete this conversation');
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    await Conversation.deleteOne({ _id: req.params.id });
+    console.log('Conversation deleted successfully');
+    res.status(200).json({ message: 'Conversation deleted' });
+  } catch (error) {
+    console.error('Error deleting conversation:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
 
 export default router;

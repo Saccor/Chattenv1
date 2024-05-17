@@ -1,98 +1,117 @@
-Backend Summary for Frontend Development
-General Structure
-Server Setup (server.js)
-
-Initializes Express server with necessary middleware.
-Configures CORS to allow specific origins.
-Connects to MongoDB.
-Sets up session management.
-Initializes Passport for authentication.
-Defines routes for authentication, users, messages, and conversations.
-Initializes Socket.IO for real-time message handling.
-Socket.IO (sockets/socket.js)
-
-Configures Socket.IO with CORS settings.
-Handles events: joinConversation, leaveConversation, newMessage, and disconnect.
-Emits messageReceived event to broadcast new messages.
-Database Connection (mongoose.setup.js)
-
-Establishes a connection to MongoDB using Mongoose.
-Authentication
-Passport Setup (passport-setup.js)
-
-Configures Google OAuth 2.0 for user authentication.
-Serializes and deserializes user sessions.
-Auth Routes (authRoutes.js)
-
-Defines routes for Google authentication (/google, /google/callback).
-Handles login failure and logout.
-Provides a route to check authentication status.
+Backend Summary
 Models
-User Model (User.js)
+User Model
 
-Fields: googleId, name, email, profilePhotoUrl.
-Uses Mongoose for schema definition and model creation.
-Message Model (Message.js)
+Schema:
+googleId (String, required, unique)
+name (String, required)
+email (String, required, unique)
+profilePhotoUrl (String)
+blockedUsers (Array of User references)
+Includes timestamps
+File: User.js
+Message Model
 
-Fields: senderId, text, timestamp, conversationId.
-References User and Conversation models.
-Conversation Model (Conversation.js)
+Schema:
+senderId (ObjectId, references User, required)
+text (String, required)
+timestamp (Date, default: Date.now)
+conversationId (ObjectId, references Conversation, required)
+File: Message.js
+Conversation Model
 
-Fields: participants, participantNames, messages, createdAt.
-Creates text index on participantNames for search functionality.
-Middleware
-isAuthenticated Middleware (isAuthenticated.js)
-Checks if a user is authenticated.
-Sends a 401 response if not authenticated.
+Schema:
+participants (Array of ObjectIds, references User, required)
+participantNames (Array of Strings, required)
+messages (Array of ObjectIds, references Message)
+createdAt (Date, default: Date.now)
+File: Conversation.js
 Routes
-User Routes (userRoutes.js)
+Authentication Routes (/auth)
 
-Fetches all users with names and profile photo URLs.
-Uses isAuthenticated middleware.
-Message Routes (messageRoutes.js)
+Endpoints:
+GET /google: Initiates Google OAuth2.0 authentication
+GET /google/callback: Handles callback from Google OAuth2.0
+GET /login/failure: Handles login failure
+GET /logout: Logs out the user
+GET /check: Checks if the user is authenticated
+File: authRoutes.js
+User Routes (/users)
 
-POST /messages: Sends a new message.
-GET /messages/:conversationId: Fetches messages for a conversation.
-Uses isAuthenticated middleware.
-Conversation Routes (conversationsRoutes.js)
+Endpoints:
+GET /: Fetches all users
+POST /block: Blocks a user
+POST /unblock: Unblocks a user
+File: userRoutes.js
+Message Routes (/messages)
 
-GET /conversations: Fetches all conversations for the authenticated user.
-POST /conversations: Creates a new conversation.
-GET /conversations/earlier: Fetches earlier messages for conversations.
-Uses isAuthenticated middleware.
-Environment Configuration
-Environment Variables
-MONGO_URI: MongoDB connection string.
-SESSION_SECRET: Secret for session management.
-GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET: Credentials for Google OAuth.
-Frontend Integration Points
-Authentication
+Endpoints:
+POST /: Sends a message
+GET /:conversationId: Fetches messages for a specific conversation
+File: messageRoutes.js
+Conversation Routes (/conversations)
 
-Google OAuth login and logout through /auth/google and /auth/logout.
-Check authentication status via /auth/check.
-User Data
+Endpoints:
+GET /: Fetches all conversations for a user with the last message details
+POST /: Creates a new conversation
+GET /earlier: Fetches all conversations with earlier messages
+DELETE /:id: Deletes a conversation by ID
+File: conversationsRoutes.js
+Middleware
+isAuthenticated.js: Checks if the user is authenticated
+File: isAuthenticated.js
+Socket Initialization
+Socket Events:
+joinConversation: Joins a conversation
+leaveConversation: Leaves a conversation
+newMessage: Sends a new message
+disconnect: Handles user disconnection
+File: socket.js
+Database Connection
+mongoose.setup.js: Connects to MongoDB using Mongoose
+File: mongoose.setup.js
+Passport Configuration
+passport-setup.js: Sets up Google OAuth2.0 with Passport
+File: passport-setup.js
+Frontend Integration
+User Model
+User ID: googleId
+User Info: name, email, profilePhotoUrl
+Conversation Model
+Conversation ID: _id
+Participants: participants, participantNames
+Messages: messages
+Message Model
+Message ID: _id
+Sender Info: senderId (populated with name, profilePhotoUrl)
+Content: text
+Timestamp: timestamp
+Conversation ID: conversationId
+API Endpoints
+User Authentication
 
-Fetch user data with /users.
-Messaging
+GET /auth/google
+GET /auth/google/callback
+GET /auth/login/failure
+GET /auth/logout
+GET /auth/check
+User Management
 
-Send messages to /messages.
-Fetch messages for a conversation from /messages/:conversationId.
+GET /users
+POST /users/block
+POST /users/unblock
+Messages
+
+POST /messages
+GET /messages/:conversationId
 Conversations
 
-Fetch all conversations via /conversations.
-Create new conversations with /conversations.
-Fetch conversations with earlier messages via /conversations/earlier.
-Real-Time Updates
-
-Use Socket.IO to handle real-time events:
-Join a conversation: joinConversation.
-Leave a conversation: leaveConversation.
-Send a message: newMessage.
-Receive messages: messageReceived.
-
-
-
-
-
-
-
+GET /conversations
+POST /conversations
+GET /conversations/earlier
+DELETE /conversations/:id
+WebSocket Events
+Join a Conversation: joinConversation
+Leave a Conversation: leaveConversation
+New Message: newMessage
+User Disconnected: disconnect

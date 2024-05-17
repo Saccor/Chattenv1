@@ -1,3 +1,4 @@
+// components/Chat.js
 import React, { useState, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
 import {
@@ -14,7 +15,6 @@ import {
 import './Chat.css';
 
 const serverUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://saccoschatt.onrender.com';
-
 const socket = io(serverUrl, { withCredentials: true });
 
 function Chat() {
@@ -46,7 +46,6 @@ function Chat() {
         setCurrentUserId(response.user._id);
         setCurrentUserName(response.user.name);
       } else {
-        // Redirect to login if not authenticated
         window.location.href = '/login';
       }
       setIsLoadingCurrentUser(false);
@@ -75,12 +74,10 @@ function Chat() {
           return conv;
         });
 
-        // If the conversation does not exist in the list, fetch and add it
         if (!updatedConversations.some(conv => conv._id === message.conversationId)) {
           fetchAllConversations();
         }
 
-        // Ensure the conversation with the new message appears at the top
         updatedConversations = updatedConversations.map(conv => {
           if (conv._id === message.conversationId) {
             return { ...conv, lastMessage: message };
@@ -172,7 +169,6 @@ function Chat() {
             return conv;
           });
 
-          // Ensure the conversation with the new message appears at the top
           updatedConversations = updatedConversations.map(conv => {
             if (conv._id === activeConversation._id) {
               return { ...conv, lastMessage: messageToSend };
@@ -210,7 +206,6 @@ function Chat() {
     blockUser(userId)
       .then(() => {
         alert('User blocked successfully');
-        // Optionally, you can also update the UI to reflect the blocked status
       })
       .catch(error => {
         console.error('Error blocking user:', error);
@@ -222,7 +217,6 @@ function Chat() {
     unblockUser(userId)
       .then(() => {
         alert('User unblocked successfully');
-        // Optionally, you can also update the UI to reflect the unblocked status
       })
       .catch(error => {
         console.error('Error unblocking user:', error);

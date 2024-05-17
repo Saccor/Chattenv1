@@ -1,3 +1,4 @@
+// services/api.js
 import axios from 'axios';
 
 const API_BASE_URL = window.location.hostname === 'localhost'
@@ -51,13 +52,11 @@ export const fetchCurrentUser = () => {
     .then(response => {
       const { user, isAuthenticated } = response.data;
       if (isAuthenticated) {
-        console.log('Fetched current user:', user);
         return { isAuthenticated, user };
       }
       return { isAuthenticated: false, user: null };
     })
     .catch(error => {
-      console.error('Error fetching current user:', error);
       throw error;
     });
 };
@@ -69,30 +68,18 @@ export const logoutUser = () => {
       window.location.href = '/login';
     })
     .catch(error => {
-      console.error('Error logging out:', error);
       throw error;
     });
 };
 
 export const deleteConversation = (conversationId) => {
-  console.log(`Sending request to delete conversation with ID: ${conversationId}`);
   return client.delete(`/conversations/${conversationId}`);
 };
 
-
 export const blockUser = (contactId) => {
-  return client.post('/users/block', { contactId })
-    .catch(error => {
-      console.error('Error blocking user:', error);
-      throw error;
-    });
+  return client.post('/users/block', { contactId });
 };
 
 export const unblockUser = (contactId) => {
-  return client.post('/users/unblock', { contactId })
-    .catch(error => {
-      console.error('Error unblocking user:', error);
-      throw error;
-    });
+  return client.post('/users/unblock', { contactId });
 };
-

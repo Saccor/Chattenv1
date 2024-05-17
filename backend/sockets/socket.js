@@ -1,3 +1,4 @@
+// sockets/socket.js
 import { Server as SocketIO } from 'socket.io';
 import User from '../models/User.js';
 
@@ -5,7 +6,6 @@ const initializeSocket = (server) => {
   const io = new SocketIO(server, {
     cors: {
       origin: function (origin, callback) {
-        // List of valid origins
         const allowedOrigins = ['http://localhost:3000', 'https://chattenv1.vercel.app'];
         if (!origin || allowedOrigins.indexOf(origin) !== -1) {
           callback(null, true);
@@ -33,14 +33,24 @@ const initializeSocket = (server) => {
 
     socket.on('newMessage', async (message) => {
       try {
-        const user = await User.findById(message.senderId);
-        if (!user) {
-          console.error('User not found:', message.senderId);
+        const sender = await User.findById(message.senderId);
+        const conversation = await Conversation.findById(message.conversationId).populate('participants');
+        
+        if (!sender || !conversation) {
+          console.error('Sender or conversation not found');
           return;
         }
+
+        const recipient = conversation.participants.find(participant => participant._id.toString() !== sender._id.toString());
+        
+        if (recipient && recipient.blockedUsers.includes(sender._id)) {
+          console.log(`Message blocked because ${recipient.name} has blocked ${sender.name}`);
+          return;
+        }
+
         const messageToSend = {
           ...message,
-          senderName: user.name
+          senderName: sender.name
         };
         socket.to(message.conversationId).emit('messageReceived', messageToSend);
         console.log(`Message sent to conversation ${message.conversationId}`);
